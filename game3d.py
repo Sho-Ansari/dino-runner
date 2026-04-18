@@ -47,7 +47,7 @@ for side in (-12, 12):
 
 player = Entity(
     model='cube',
-    color=color.rgb(110, 110, 110),
+    color=color.rgb(40, 160, 70),
     scale=(1, PLAYER_SCALE_Y, 1),
     position=(0, PLAYER_REST_Y, 0),
     collider='box',
@@ -55,7 +55,7 @@ player = Entity(
 head = Entity(
     parent=player,
     model='cube',
-    color=color.rgb(110, 110, 110),
+    color=color.rgb(40, 160, 70),
     scale=(0.9, 0.55, 1.3),
     position=(0, 0.55, 0.3),
 )
@@ -64,8 +64,11 @@ Entity(parent=head, model='sphere', color=color.white, scale=0.18, position=(0.2
 Entity(parent=head, model='sphere', color=color.black, scale=0.08, position=(-0.22, 0.1, 0.62))
 Entity(parent=head, model='sphere', color=color.black, scale=0.08, position=(0.22, 0.1, 0.62))
 # Tail
-Entity(parent=player, model='cube', color=color.rgb(110, 110, 110),
-       scale=(0.4, 0.3, 0.8), position=(0, 0.1, -0.7))
+Entity(parent=player, model='cube', color=color.rgb(40, 160, 70),
+       scale=(0.4, 0.3, 1.2), position=(0, 0.1, -0.9))
+# Belly accent for contrast
+Entity(parent=player, model='cube', color=color.rgb(250, 230, 170),
+       scale=(0.55, 0.9, 0.55), position=(0, -0.15, 0.25))
 
 camera.position = (0, 6, -10)
 camera.rotation_x = 18
@@ -106,31 +109,34 @@ state = {
 obstacles = []
 
 
+SPAWN_Z = 45
+
+
 def spawn_obstacle():
     lane_x = random.choice(LANES)
     kind = random.random()
     if kind < 0.55:
         obs = Entity(
             model='cube',
-            color=color.rgb(50, 140, 60),
+            color=color.rgb(200, 60, 60),
             scale=(1, 2, 1),
-            position=(lane_x, 1, 70),
+            position=(lane_x, 1, SPAWN_Z),
             collider='box',
         )
     elif kind < 0.8:
         obs = Entity(
             model='cube',
-            color=color.rgb(50, 140, 60),
+            color=color.rgb(230, 140, 40),
             scale=(1, 3.2, 1),
-            position=(lane_x, 1.6, 70),
+            position=(lane_x, 1.6, SPAWN_Z),
             collider='box',
         )
     else:
         obs = Entity(
             model='cube',
-            color=color.rgb(50, 140, 60),
+            color=color.rgb(60, 60, 180),
             scale=(2.4, 2, 1),
-            position=(lane_x, 1, 70),
+            position=(lane_x, 1, SPAWN_Z),
             collider='box',
         )
     obstacles.append(obs)
@@ -149,7 +155,7 @@ def reset_game():
     state['started'] = True
     state['lane'] = 1
     state['vy'] = 0.0
-    state['spawn_timer'] = 0.0
+    state['spawn_timer'] = 1.2
     player.x = LANES[1]
     player.y = PLAYER_REST_Y
     clear_obstacles()
