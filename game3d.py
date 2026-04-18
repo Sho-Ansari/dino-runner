@@ -1,6 +1,6 @@
 from ursina import (
     Ursina, Entity, Sky, Text, camera, color, window, time, destroy,
-    application, held_keys,
+    application,
 )
 import random
 
@@ -11,12 +11,17 @@ window.borderless = False
 window.fps_counter.enabled = True
 window.exit_button.visible = False
 
+
+def rgb(r, g, b):
+    """Color from 0-255 values (Ursina's color.rgb in this version takes 0-1 only)."""
+    return color.rgb(r / 255, g / 255, b / 255)
+
+
 Sky()
 
 LANES = [-3, 0, 3]
 GROUND_LENGTH = 40
 GROUND_COUNT = 6
-GROUND_Y_TOP = 0
 PLAYER_SCALE_Y = 2
 PLAYER_REST_Y = PLAYER_SCALE_Y / 2
 GRAVITY = 45
@@ -24,11 +29,22 @@ JUMP_VEL = 16
 START_SPEED = 18
 MAX_SPEED = 55
 
+GROUND_COLOR = rgb(200, 160, 110)
+GRASS_COLOR = rgb(90, 160, 70)
+DINO_COLOR = rgb(60, 170, 80)
+BELLY_COLOR = rgb(240, 220, 160)
+SHORT_OBS_COLOR = rgb(220, 60, 60)
+TALL_OBS_COLOR = rgb(230, 140, 40)
+WIDE_OBS_COLOR = rgb(70, 90, 220)
+CLOUD_COLOR = rgb(245, 245, 245)
+HI_COLOR = rgb(110, 110, 110)
+OVER_COLOR = rgb(200, 40, 40)
+
 ground_segments = []
 for i in range(GROUND_COUNT):
     g = Entity(
         model='cube',
-        color=color.rgb(170, 130, 80),
+        color=GROUND_COLOR,
         texture='white_cube',
         texture_scale=(4, 8),
         scale=(20, 1, GROUND_LENGTH),
@@ -36,18 +52,17 @@ for i in range(GROUND_COUNT):
     )
     ground_segments.append(g)
 
-# Decorative side strips
 for side in (-12, 12):
     Entity(
         model='cube',
-        color=color.rgb(90, 140, 60),
+        color=GRASS_COLOR,
         scale=(4, 1, GROUND_LENGTH * GROUND_COUNT),
         position=(side, -0.55, GROUND_LENGTH * GROUND_COUNT / 2),
     )
 
 player = Entity(
     model='cube',
-    color=color.rgb(40, 160, 70),
+    color=DINO_COLOR,
     scale=(1, PLAYER_SCALE_Y, 1),
     position=(0, PLAYER_REST_Y, 0),
     collider='box',
@@ -55,7 +70,7 @@ player = Entity(
 head = Entity(
     parent=player,
     model='cube',
-    color=color.rgb(40, 160, 70),
+    color=DINO_COLOR,
     scale=(0.9, 0.55, 1.3),
     position=(0, 0.55, 0.3),
 )
@@ -63,30 +78,27 @@ Entity(parent=head, model='sphere', color=color.white, scale=0.18, position=(-0.
 Entity(parent=head, model='sphere', color=color.white, scale=0.18, position=(0.22, 0.1, 0.55))
 Entity(parent=head, model='sphere', color=color.black, scale=0.08, position=(-0.22, 0.1, 0.62))
 Entity(parent=head, model='sphere', color=color.black, scale=0.08, position=(0.22, 0.1, 0.62))
-# Tail
-Entity(parent=player, model='cube', color=color.rgb(40, 160, 70),
+Entity(parent=player, model='cube', color=DINO_COLOR,
        scale=(0.4, 0.3, 1.2), position=(0, 0.1, -0.9))
-# Belly accent for contrast
-Entity(parent=player, model='cube', color=color.rgb(250, 230, 170),
+Entity(parent=player, model='cube', color=BELLY_COLOR,
        scale=(0.55, 0.9, 0.55), position=(0, -0.15, 0.25))
 
 camera.position = (0, 6, -10)
 camera.rotation_x = 18
 camera.fov = 75
 
-# Clouds
 clouds = []
 for _ in range(12):
     c = Entity(
         model='sphere',
-        color=color.rgb(240, 240, 240),
+        color=CLOUD_COLOR,
         scale=(random.uniform(3, 6), 1.5, random.uniform(3, 6)),
         position=(random.uniform(-40, 40), random.uniform(12, 20), random.uniform(20, 200)),
     )
     clouds.append(c)
 
 score_text = Text(text='00000', scale=2, position=(-0.88, 0.46), color=color.black)
-hi_text = Text(text='HI 00000', scale=1.3, position=(0.55, 0.46), color=color.rgb(90, 90, 90))
+hi_text = Text(text='HI 00000', scale=1.3, position=(0.55, 0.46), color=HI_COLOR)
 hint_text = Text(
     text='SPACE / UP: jump    A/D or LEFT/RIGHT: change lane    ESC: quit\n\nPress SPACE to start',
     scale=1.1,
@@ -94,7 +106,7 @@ hint_text = Text(
     position=(0, 0.05),
     color=color.black,
 )
-over_text = Text(text='', scale=2.5, origin=(0, 0), position=(0, 0.1), color=color.rgb(180, 30, 30))
+over_text = Text(text='', scale=2.5, origin=(0, 0), position=(0, 0.1), color=OVER_COLOR)
 
 state = {
     'speed': START_SPEED,
@@ -108,7 +120,6 @@ state = {
 }
 obstacles = []
 
-
 SPAWN_Z = 45
 
 
@@ -118,7 +129,7 @@ def spawn_obstacle():
     if kind < 0.55:
         obs = Entity(
             model='cube',
-            color=color.rgb(200, 60, 60),
+            color=SHORT_OBS_COLOR,
             scale=(1, 2, 1),
             position=(lane_x, 1, SPAWN_Z),
             collider='box',
@@ -126,7 +137,7 @@ def spawn_obstacle():
     elif kind < 0.8:
         obs = Entity(
             model='cube',
-            color=color.rgb(230, 140, 40),
+            color=TALL_OBS_COLOR,
             scale=(1, 3.2, 1),
             position=(lane_x, 1.6, SPAWN_Z),
             collider='box',
@@ -134,7 +145,7 @@ def spawn_obstacle():
     else:
         obs = Entity(
             model='cube',
-            color=color.rgb(60, 60, 180),
+            color=WIDE_OBS_COLOR,
             scale=(2.4, 2, 1),
             position=(lane_x, 1, SPAWN_Z),
             collider='box',
